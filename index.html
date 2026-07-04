@@ -1133,15 +1133,17 @@
 
   // Live feedback list — only approved feedback is shown publicly
   const feedbackList = document.getElementById('feedbackList');
-  db.collection('feedback').where('status', '==', 'approved').orderBy('timestamp', 'desc').limit(20)
+  db.collection('feedback').where('status', '==', 'approved')
     .onSnapshot((snapshot) => {
       if (snapshot.empty) {
         feedbackList.innerHTML = '<p class="fb-empty">No feedback yet. Be the first to share!</p>';
         return;
       }
       feedbackList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const d = doc.data();
+      const docs = [];
+      snapshot.forEach(doc => docs.push(doc.data()));
+      docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+      docs.slice(0, 20).forEach(d => {
         const rating = d.rating || 0;
         const starsHtml = '&#9733;'.repeat(rating) + '&#9734;'.repeat(5 - rating);
         const card = document.createElement('div');
