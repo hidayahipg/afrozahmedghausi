@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Feedback Admin | Afroz Ahmed Ghausi</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-deep:#0a1f3a;
+    --navy-rich:#0f2c52;
+    --gold:#c9a227;
+    --gold-light:#e8c766;
+    --cream:#f8f5ef;
+    --line:rgba(201,162,39,0.25);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:linear-gradient(160deg,var(--navy-deep),var(--navy-rich));
+    min-height:100vh;
+    color:var(--cream);
+    padding:40px 20px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+  h1{font-family:'Fraunces',serif;font-size:1.8rem;margin-bottom:8px;}
+  .sub{color:rgba(248,245,239,0.6);font-size:0.9rem;margin-bottom:32px;}
+
+  /* Login box */
+  #loginBox{
+    max-width:380px;
+    margin:80px auto;
+    background:rgba(248,245,239,0.05);
+    border:1px solid var(--line);
+    padding:36px;
+  }
+  #loginBox h2{font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:20px;text-align:center;}
+  #loginBox input{
+    width:100%;
+    background:rgba(248,245,239,0.06);
+    border:1px solid var(--line);
+    color:var(--cream);
+    padding:12px 14px;
+    margin-bottom:14px;
+    font-size:0.92rem;
+  }
+  #loginBox button{
+    width:100%;
+    padding:13px;
+    background:var(--gold);
+    color:var(--navy-deep);
+    border:none;
+    font-weight:700;
+    font-size:0.9rem;
+    cursor:pointer;
+    letter-spacing:0.02em;
+  }
+  #loginBox button:hover{background:var(--gold-light);}
+  #loginError{color:#e77;font-size:0.85rem;margin-top:12px;text-align:center;min-height:18px;}
+
+  /* Dashboard */
+  #dashboard{display:none;}
+  .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+  #logoutBtn{
+    background:none;border:1px solid var(--line);color:var(--cream);
+    padding:8px 18px;font-size:0.82rem;cursor:pointer;
+  }
+  #logoutBtn:hover{border-color:var(--gold);color:var(--gold-light);}
+
+  .tabs{display:flex;gap:10px;margin-bottom:24px;}
+  .tab-btn{
+    background:none;border:1px solid var(--line);color:rgba(248,245,239,0.7);
+    padding:10px 20px;font-size:0.85rem;cursor:pointer;
+  }
+  .tab-btn.active{background:var(--gold);color:var(--navy-deep);border-color:var(--gold);font-weight:600;}
+
+  .fcard{
+    background:rgba(248,245,239,0.05);
+    border:1px solid var(--line);
+    padding:20px 22px;
+    margin-bottom:14px;
+  }
+  .fcard-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;flex-wrap:wrap;}
+  .fname{font-weight:700;font-size:1rem;}
+  .frole{color:rgba(248,245,239,0.55);font-size:0.82rem;font-weight:400;}
+  .fstars{color:var(--gold-light);}
+  .fmsg{color:rgba(248,245,239,0.85);font-size:0.93rem;line-height:1.6;margin-bottom:14px;}
+  .factions{display:flex;gap:10px;flex-wrap:wrap;}
+  .factions button{
+    padding:8px 16px;font-size:0.8rem;font-weight:600;cursor:pointer;border:none;letter-spacing:0.02em;
+  }
+  .btn-approve{background:#2f9e5c;color:#fff;}
+  .btn-approve:hover{background:#38b56b;}
+  .btn-unapprove{background:transparent;border:1px solid var(--line);color:var(--cream);}
+  .btn-unapprove:hover{border-color:var(--gold);}
+  .btn-delete{background:#b23b3b;color:#fff;}
+  .btn-delete:hover{background:#c94848;}
+  .status-tag{font-size:0.72rem;padding:3px 10px;letter-spacing:0.05em;text-transform:uppercase;}
+  .status-pending{background:rgba(201,162,39,0.2);color:var(--gold-light);}
+  .status-approved{background:rgba(47,158,92,0.2);color:#6fd393;}
+  .empty-msg{color:rgba(248,245,239,0.5);text-align:center;padding:40px 0;}
+</style>
+</head>
+<body>
+
+<div id="loginBox">
+  <h2>Admin Login</h2>
+  <input type="email" id="loginEmail" placeholder="Email">
+  <input type="password" id="loginPassword" placeholder="Password">
+  <button id="loginBtn">Login</button>
+  <p id="loginError"></p>
+</div>
+
+<div class="wrap" id="dashboard">
+  <div class="top-bar">
+    <div>
+      <h1>Feedback Dashboard</h1>
+      <p class="sub">Approve, hide, or delete feedback submitted on your website.</p>
+    </div>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pending">Pending</button>
+    <button class="tab-btn" data-tab="approved">Approved</button>
+  </div>
+
+  <div id="listArea"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+  // PASTE THE SAME firebaseConfig YOU USED IN index.html
+  const firebaseConfig = {
+    apiKey: "PASTE_YOUR_API_KEY_HERE",
+    authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+    projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+    storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+    messagingSenderId: "PASTE_YOUR_SENDER_ID_HERE",
+    appId: "PASTE_YOUR_APP_ID_HERE"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const loginBox = document.getElementById('loginBox');
+  const dashboard = document.getElementById('dashboard');
+  const loginError = document.getElementById('loginError');
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    loginError.textContent = '';
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => { loginError.textContent = 'Invalid email or password.'; });
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      loginBox.style.display = 'none';
+      dashboard.style.display = 'block';
+      loadFeedback('pending');
+    } else {
+      loginBox.style.display = 'block';
+      dashboard.style.display = 'none';
+    }
+  });
+
+  let currentTab = 'pending';
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      loadFeedback(currentTab);
+    });
+  });
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  let unsubscribe = null;
+  function loadFeedback(status){
+    if (unsubscribe) unsubscribe();
+    const listArea = document.getElementById('listArea');
+    listArea.innerHTML = '<p class="empty-msg">Loading...</p>';
+
+    unsubscribe = db.collection('feedback').where('status', '==', status)
+      .orderBy('timestamp', 'desc')
+      .onSnapshot(snapshot => {
+        if (snapshot.empty) {
+          listArea.innerHTML = '<p class="empty-msg">No ' + status + ' feedback.</p>';
+          return;
+        }
+        listArea.innerHTML = '';
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const rating = d.rating || 0;
+          const starsHtml = '&#9733;'.repeat(rating) + '&#9734;'.repeat(5 - rating);
+          const card = document.createElement('div');
+          card.className = 'fcard';
+          card.innerHTML =
+            '<div class="fcard-head">' +
+              '<div>' +
+                '<span class="fname">' + escapeHtml(d.name) + '</span> ' +
+                (d.designation ? '<span class="frole">— ' + escapeHtml(d.designation) + '</span>' : '') +
+                '<div class="fstars">' + starsHtml + '</div>' +
+              '</div>' +
+              '<span class="status-tag status-' + d.status + '">' + d.status + '</span>' +
+            '</div>' +
+            '<p class="fmsg">' + escapeHtml(d.message) + '</p>' +
+            '<div class="factions">' +
+              (d.status === 'pending'
+                ? '<button class="btn-approve" data-id="' + doc.id + '">Approve</button>'
+                : '<button class="btn-unapprove" data-id="' + doc.id + '">Move to Pending</button>') +
+              '<button class="btn-delete" data-id="' + doc.id + '">Delete</button>' +
+            '</div>';
+          listArea.appendChild(card);
+        });
+
+        listArea.querySelectorAll('.btn-approve').forEach(b => {
+          b.addEventListener('click', () => db.collection('feedback').doc(b.dataset.id).update({status:'approved'}));
+        });
+        listArea.querySelectorAll('.btn-unapprove').forEach(b => {
+          b.addEventListener('click', () => db.collection('feedback').doc(b.dataset.id).update({status:'pending'}));
+        });
+        listArea.querySelectorAll('.btn-delete').forEach(b => {
+          b.addEventListener('click', () => {
+            if (confirm('Delete this feedback permanently?')) {
+              db.collection('feedback').doc(b.dataset.id).delete();
+            }
+          });
+        });
+      });
+  }
+</script>
+
+</body>
+</html>
