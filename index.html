@@ -349,6 +349,83 @@
     color:rgba(248,245,239,0.65);
 }
 
+  /* LIVE FEEDBACK */
+  .feedback-section{background:var(--navy-deep);}
+  .feedback-section .section-head h2{color:var(--cream);}
+  .feedback-section .section-head p{color:rgba(248,245,239,0.65);}
+  .feedback-grid{
+    display:grid;
+    grid-template-columns:0.9fr 1.1fr;
+    gap:50px;
+    align-items:start;
+  }
+  .feedback-form{
+    background:rgba(248,245,239,0.04);
+    border:1px solid var(--line);
+    padding:32px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .feedback-form label{
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:-6px;
+  }
+  .feedback-form input, .feedback-form textarea{
+    width:100%;
+    background:rgba(248,245,239,0.06);
+    border:1px solid var(--line);
+    color:var(--cream);
+    padding:12px 14px;
+    font-family:'Inter',sans-serif;
+    font-size:0.92rem;
+  }
+  .feedback-form textarea{min-height:110px;resize:vertical;}
+  .feedback-form input::placeholder, .feedback-form textarea::placeholder{color:rgba(248,245,239,0.35);}
+  .star-input{display:flex;gap:6px;}
+  .star-input span{
+    font-size:1.9rem;
+    color:rgba(248,245,239,0.25);
+    cursor:pointer;
+    transition:color .2s ease, transform .15s ease;
+    line-height:1;
+  }
+  .star-input span:hover{transform:scale(1.1);}
+  .star-input span.active{color:var(--gold-light);}
+  .fb-status{
+    font-size:0.82rem;
+    color:var(--gold-light);
+    min-height:18px;
+  }
+  .feedback-list{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    max-height:520px;
+    overflow-y:auto;
+    padding-right:6px;
+  }
+  .fb-card{
+    background:rgba(248,245,239,0.04);
+    border:1px solid var(--line);
+    padding:20px 22px;
+  }
+  .fb-card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+    gap:12px;
+  }
+  .fb-name{font-weight:700;color:var(--cream);font-size:0.95rem;}
+  .fb-role{font-weight:400;color:rgba(248,245,239,0.55);font-size:0.82rem;}
+  .fb-stars{color:var(--gold-light);font-size:0.9rem;letter-spacing:1px;}
+  .fb-msg{color:rgba(248,245,239,0.8);font-size:0.92rem;line-height:1.6;}
+  .fb-empty{color:rgba(248,245,239,0.5);font-size:0.9rem;text-align:center;padding:30px 0;}
+
   /* VIDEO */
   .video-section{background:var(--cream);}
   .video-wrap{
@@ -562,6 +639,7 @@
     .ach-grid{grid-template-columns:repeat(2,1fr);}
     .test-grid{grid-template-columns:1fr;}
     .contact-grid{grid-template-columns:1fr;gap:50px;}
+    .feedback-grid{grid-template-columns:1fr;gap:36px;}
     .form-row{grid-template-columns:1fr;}
     .nav-links{
       position:absolute;top:100%;left:0;right:0;
@@ -588,6 +666,7 @@
       <li><a href="#achievements">Achievements</a></li>
       <li><a href="#experience">Experience</a></li>
       <li><a href="#testimonials">Testimonials</a></li>
+      <li><a href="#feedback">Feedback</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
@@ -820,6 +899,44 @@
   </div>
 </section>
 
+<section class="feedback-section" id="feedback">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Live Feedback</p>
+      <h2>Share Your Experience</h2>
+      <p>Attended a workshop or session? Leave your rating and feedback below — it appears here instantly for everyone to see.</p>
+    </div>
+    <div class="feedback-grid reveal">
+      <form class="feedback-form" id="feedbackForm">
+        <label for="fbName">Your Name</label>
+        <input type="text" id="fbName" placeholder="Your name" required>
+
+        <label for="fbDesignation">Your Designation</label>
+        <input type="text" id="fbDesignation" placeholder="e.g. Student, Teacher, Manager">
+
+        <label>Your Rating</label>
+        <div class="star-input" id="starInput">
+          <span data-val="1">&#9733;</span>
+          <span data-val="2">&#9733;</span>
+          <span data-val="3">&#9733;</span>
+          <span data-val="4">&#9733;</span>
+          <span data-val="5">&#9733;</span>
+        </div>
+
+        <label for="fbMessage">Your Feedback</label>
+        <textarea id="fbMessage" placeholder="Share your experience..." required></textarea>
+
+        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+        <p class="fb-status" id="fbStatus"></p>
+      </form>
+
+      <div class="feedback-list" id="feedbackList">
+        <p class="fb-empty">Loading feedback...</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="contact" id="contact">
   <div class="container contact-grid">
     <div class="reveal">
@@ -947,6 +1064,100 @@
   const carouselEl = document.querySelector('.carousel');
   carouselEl.addEventListener('mouseenter', () => clearInterval(autoplay));
   carouselEl.addEventListener('mouseleave', () => autoplay = setInterval(() => goTo(index + 1), 5000));
+</script>
+
+<!-- ===== LIVE FEEDBACK: FIREBASE ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBERWQXaPa3EQpi3TW_bjfnm22mzLzAqfo",
+    authDomain: "hidayah-feedback.firebaseapp.com",
+    projectId: "hidayah-feedback",
+    storageBucket: "hidayah-feedback.firebasestorage.app",
+    messagingSenderId: "295640262826",
+    appId: "1:295640262826:web:6cad3d1eea64ae17e548d3"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // Star rating input
+  let selectedRating = 0;
+  const stars = document.querySelectorAll('#starInput span');
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.dataset.val);
+      stars.forEach(s => s.classList.toggle('active', parseInt(s.dataset.val) <= selectedRating));
+    });
+  });
+
+  // Submit feedback
+  const feedbackForm = document.getElementById('feedbackForm');
+  const fbStatus = document.getElementById('fbStatus');
+  feedbackForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = document.getElementById('fbName').value.trim();
+    const designation = document.getElementById('fbDesignation').value.trim();
+    const message = document.getElementById('fbMessage').value.trim();
+
+    if(!name || !message || selectedRating === 0){
+      fbStatus.textContent = 'Please fill your name, feedback, and select a rating.';
+      return;
+    }
+
+    fbStatus.textContent = 'Submitting...';
+    db.collection('feedback').add({
+      name: name,
+      designation: designation,
+      rating: selectedRating,
+      message: message,
+      status: 'pending',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      fbStatus.textContent = 'Thank you! Your feedback will appear here once reviewed.';
+      feedbackForm.reset();
+      selectedRating = 0;
+      stars.forEach(s => s.classList.remove('active'));
+    }).catch((err) => {
+      fbStatus.textContent = 'Something went wrong. Please try again.';
+      console.error(err);
+    });
+  });
+
+  // Live feedback list — only approved feedback is shown publicly
+  const feedbackList = document.getElementById('feedbackList');
+  db.collection('feedback').where('status', '==', 'approved').orderBy('timestamp', 'desc').limit(20)
+    .onSnapshot((snapshot) => {
+      if (snapshot.empty) {
+        feedbackList.innerHTML = '<p class="fb-empty">No feedback yet. Be the first to share!</p>';
+        return;
+      }
+      feedbackList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const rating = d.rating || 0;
+        const starsHtml = '&#9733;'.repeat(rating) + '&#9734;'.repeat(5 - rating);
+        const card = document.createElement('div');
+        card.className = 'fb-card';
+        card.innerHTML =
+          '<div class="fb-card-head">' +
+            '<span class="fb-name">' + escapeHtml(d.name) + (d.designation ? ' <span class="fb-role">— ' + escapeHtml(d.designation) + '</span>' : '') + '</span>' +
+            '<span class="fb-stars">' + starsHtml + '</span>' +
+          '</div>' +
+          '<p class="fb-msg">' + escapeHtml(d.message) + '</p>';
+        feedbackList.appendChild(card);
+      });
+    }, (err) => {
+      feedbackList.innerHTML = '<p class="fb-empty">Could not load feedback right now.</p>';
+      console.error(err);
+    });
 </script>
 
 </body>
