@@ -193,15 +193,18 @@
     listArea.innerHTML = '<p class="empty-msg">Loading...</p>';
 
     unsubscribe = db.collection('feedback').where('status', '==', status)
-      .orderBy('timestamp', 'desc')
       .onSnapshot(snapshot => {
         if (snapshot.empty) {
           listArea.innerHTML = '<p class="empty-msg">No ' + status + ' feedback.</p>';
           return;
         }
         listArea.innerHTML = '';
-        snapshot.forEach(doc => {
-          const d = doc.data();
+        const docs = [];
+        snapshot.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+        docs.sort((a, b) => (b.data.timestamp?.seconds || 0) - (a.data.timestamp?.seconds || 0));
+        docs.forEach(item => {
+          const d = item.data;
+          const docId = item.id;
           const rating = d.rating || 0;
           const starsHtml = '&#9733;'.repeat(rating) + '&#9734;'.repeat(5 - rating);
           const card = document.createElement('div');
@@ -218,9 +221,9 @@
             '<p class="fmsg">' + escapeHtml(d.message) + '</p>' +
             '<div class="factions">' +
               (d.status === 'pending'
-                ? '<button class="btn-approve" data-id="' + doc.id + '">Approve</button>'
-                : '<button class="btn-unapprove" data-id="' + doc.id + '">Move to Pending</button>') +
-              '<button class="btn-delete" data-id="' + doc.id + '">Delete</button>' +
+                ? '<button class="btn-approve" data-id="' + docId + '">Approve</button>'
+                : '<button class="btn-unapprove" data-id="' + docId + '">Move to Pending</button>') +
+              '<button class="btn-delete" data-id="' + docId + '">Delete</button>' +
             '</div>';
           listArea.appendChild(card);
         });
@@ -238,6 +241,9 @@
             }
           });
         });
+      }, err => {
+        listArea.innerHTML = '<p class="empty-msg">Error loading feedback: ' + err.message + '</p>';
+        console.error(err);
       });
   }
 </script>
